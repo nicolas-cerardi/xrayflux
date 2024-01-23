@@ -1,13 +1,12 @@
 import os
-
-atomdb = os.environ['ATOMDB']
-work = os.environ['WORK']
+#atomdb = os.environ['ATOMDB']
+#work = os.environ['WORK']
 import pyatomdb
 import numpy as np
 from tqdm import tqdm
 from astropy.io import fits as F
 from scipy.interpolate import interp1d, interp2d
-from xraytables.fitsutils import mwrfits
+from xrayflux.fitsutils import mwrfits
 import matplotlib.pyplot as plt
 
 def compute_flux(range_E=[0.5, 2.0], n_E=10, 
@@ -23,7 +22,7 @@ def compute_flux(range_E=[0.5, 2.0], n_E=10,
              plots=False):
     
     ebins_in, ebins_out, ebins_in_m, ebins_out_m, rmfmatrix, arf, abres, elements = \
-                                prepare_session_rmf_arf_elts(range_E, n_E, rmf, arf)
+                                prepare_session_rmf_arf_elts(range_E, n_E, rmf, arf, elements, verbose=verbose)
     
     tmp_sess = pyatomdb.spectrum.CIESession(elements=elements)
     tmp_sess.set_eebrems(eebrems)
@@ -42,14 +41,14 @@ def compute_flux(range_E=[0.5, 2.0], n_E=10,
     tmp_sess.set_response(tmp_ebins, raw=True)
 
     # returns f/ne so in ph cm^3 s-1 bin-1
-    tmp_spec = tmp_sess.return_spectrum(kT)
-    if plots: axs[0].loglog(mid_vals(ebins_in), tmp_spec, label=('%.1f keV'%kT))
+    tmp_spec = tmp_sess.return_spectrum(T)
+    if plots: axs[0].loglog(mid_vals(ebins_in), tmp_spec, label=('%.1f keV'%T))
     # res in ph cm^3 s-1, or ph cm^5 s-1 if rmf and arf are used.
     if verbose>0 : print(tmp_spec.shape, rmfmatrix.shape)
     #apply rmf then arf
     if rmf is not None: tmp_spec = np.matmul(tmp_spec,rmfmatrix)
     tmp_spec *= arf #np.ones(ebins_out_m.shape) #
-    if plots: axs[1].loglog(mid_vals(ebins_out), tmp_spec, label=('%.1f keV'%kT))
+    if plots: axs[1].loglog(mid_vals(ebins_out), tmp_spec, label=('%.1f keV'%T))
     #integrate spectrum, apply l.o.s. dilatation and store it at the right (z,kT) index
     res = tmp_spec.sum()/(1+z) 
     if plots:
@@ -62,7 +61,7 @@ def compute_flux(range_E=[0.5, 2.0], n_E=10,
     return res
     
     
-def prepare_session_rmf_arf_elts(range_E=[0.5, 2.0], n_E=10, rmf, arf):
+def prepare_session_rmf_arf_elts(range_E, n_E, rmf, arf, elements, verbose=0):
     # ebins in and out are because of the rmf. ebins in must be larger as some photons outside 
     # the ebins_out may be falsely detected inside ebins_out... we have to take account of them.
     # boundaries
@@ -83,10 +82,11 @@ def prepare_session_rmf_arf_elts(range_E=[0.5, 2.0], n_E=10, rmf, arf):
     else : 
         # just a dummy aeff
         arf = np.ones(ebins_out_m.shape)
+        rmfmatrix = None # this will make the code crash
     # abundancies and elements
-    abres = np.ones(np.array(elements).shape)
     elements = elements if elements is not None else range(1, 3)
-    return ebins_in, ebins_out, ebins_in_m, ebins_out_m, rmf, arf, abres, elements
+    abres = np.ones(np.array(elements).shape)
+    return ebins_in, ebins_out, ebins_in_m, ebins_out_m, rmfmatrix, arf, abres, elements
 
 def make_fluxtable(outfile=None,
              range_E=[0.5, 2.0], n_E=10, 
@@ -133,7 +133,7 @@ def make_fluxtable(outfile=None,
     res = np.zeros((n_z, n_T))
     
     ebins_in, ebins_out, ebins_in_m, ebins_out_m, rmfmatrix, arf, abres, elements = \
-                                prepare_session_rmf_arf_elts(range_E, n_E, rmf, arf)
+                                prepare_session_rmf_arf_elts(range_E, n_E, rmf, arf, elements, verbose=verbose)
     
     if plots:
         fig, axs = plt.subplots(2, n_z, figsize=[15,10])
@@ -163,18 +163,18 @@ def make_fluxtable(outfile=None,
                 if plots: axs[0, i].plot(mid_vals(ebins_in), tmp_spec, label=('%.1f keV'%kT))
                 # res in ph cm^3 s-1, or ph cm^5 s-1 if rmf and arf are used.
                 if verbose>0 : print(tmp_spec.shape, rmfmatrix.shape)
-                #print(tmp_spec.shape, rmfmatrix.shape)
-                beforermf = tmp_spec.sum()
+                # apply rmf and arf
                 if rmf is not None: tmp_spec = np.matmul(tmp_spec,rmfmatrix)
-                tmp_spec *= arf #np.ones(ebins_out_m.shape) #
-                if plots: axs[1, i].plot(mid_vals(ebins_out), tmp_spec, label=('%.1f keV'%kT))
+                tmp_spec *= arf
+                if plots: axs[1, i].plot(mid_vals(ebins_out), tmp_spec/(1+z) , label=('%.1f keV'%kT))
                 #integrate spectrum, apply l.o.s. dilatation and store it at the right (z,kT) index
                 res[i,j] = tmp_spec.sum()/(1+z) 
                 pbar.update(1)
             if plots:
-                axs[1,i].annotate('z=%.1f'%z, (0.2,0.2), xycoords='axes fraction', size=15, color='k')
+                axs[0,i].annotate('z=%.1f'%z, (0.2,0.2), xycoords='axes fraction', size=15, color='k')
                 axs[1,i].legend()
                 #axs[0,i].set_ylim([1e-18, 5e-16])
+                axs[0,i].set_xlim([0.5, 2])
                 axs[0,i].set_xlim([0.5, 2])
                 #axs[1,i].set_ylim([1e-16, 2e-13])
                 axs[1,i].set_xlabel('keV')
