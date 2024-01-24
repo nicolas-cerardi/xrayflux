@@ -1,19 +1,21 @@
 # xrayflux
 
-A package that wraps `pyatomd`, performs spectrum redshifting, optionally applies instrumental response, and outputs the X-ray photon flux.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A package that wraps `pyatomdb`, performs spectrum redshifting, optionally applies instrumental response, and outputs the X-ray photon flux.
 The main functions are:
  - `compute_flux`: returns the photon flux for a given temperature $T$, abundancy $Z$ and redshift $z$.
- - `make_fluxtable`: returns tabulated photon fluxes in the $T - z$ dimensions, for a fixed $Z$
+ - `make_fluxtable`: returns tabulated photon fluxes in the $T - z$ dimensions, for a fixed $Z$.
 
 ### Installation
 
 Clone this repertory and run `pip install .`
 
-### Example
+### Minimal example
 
-_Minimal example, using AtomDB 3.0.9 tables._
+_using AtomDB 3.0.9 tables._
 
-```
+```python
 from xrayflux.xraytables import compute_flux
 
 T = 5 #in keV
