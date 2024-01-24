@@ -171,16 +171,16 @@ def make_fluxtable(outfile=None,
                 res[i,j] = tmp_spec.sum()/(1+z) 
                 pbar.update(1)
             if plots:
-                axs[0,i].annotate('z=%.1f'%z, (0.2,0.2), xycoords='axes fraction', size=15, color='k')
+                axs[0,i].annotate('z=%.1f'%z, (0.1,0.1), xycoords='axes fraction', size=15, color='k')
                 axs[1,i].legend()
-                #axs[0,i].set_ylim([1e-18, 5e-16])
-                axs[0,i].set_xlim([0.5, 2])
-                axs[0,i].set_xlim([0.5, 2])
-                #axs[1,i].set_ylim([1e-16, 2e-13])
+                axs[0,i].set_ylim([1e-20, None])
+                axs[0,i].set_xlim(range_E)
+                axs[1,i].set_xlim(range_E)
+                axs[1,i].set_ylim([1e-20, None])
                 axs[1,i].set_xlabel('keV')
         if plots:
-            axs[0,0].set_ylabel('ph cm^3 s^-1')
-            axs[1,0].set_ylabel('ph cm^5 s^-1')
+            axs[0,0].set_ylabel(r'$ph\ cm^{3}\ s^{-1}\ bin^{-1}$')
+            axs[1,0].set_ylabel(r'$ph\ cm^{5}\ s^{-1}\ bin^{-1}$')
     #print(elements, abres)
     if outfile is not None :
         outdict = {
