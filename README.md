@@ -9,7 +9,11 @@ The main functions are:
 
 ### Installation
 
-Clone this repertory and run `pip install .`
+```
+git clone https://github.com/nicolas-cerardi/xrayflux.git
+cd xrayflux
+pip install .
+```
 
 ### Minimal example
 
@@ -25,4 +29,4 @@ print(flux, "ph cm^3 s-1")
 >>> 2.672476983729378e-15 ph cm^3 s-1
 ```
 
-For more see the[demo notebook](https://github.com/nicolas-cerardi/xrayflux/blob/main/notebooks/demo_xrayflux.ipynb).
+For more see the [demo notebook](https://github.com/nicolas-cerardi/xrayflux/blob/main/notebooks/demo_xrayflux.ipynb).
