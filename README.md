@@ -24,3 +24,5 @@ flux = compute_flux(T=T, z=z)
 print(flux, "ph cm^3 s-1")
 >>> 2.672476983729378e-15 ph cm^3 s-1
 ```
+
+For more see the[demo notebook](https://github.com/nicolas-cerardi/xrayflux/blob/main/notebooks/demo_xrayflux.ipynb).

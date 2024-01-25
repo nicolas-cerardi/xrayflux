@@ -20,7 +20,41 @@ def compute_flux(range_E=[0.5, 2.0], n_E=10,
              eebrems=False,
              verbose=0,
              plots=False):
-    
+    """
+    Compute the flux of a given spectrum over a specified energy range.
+
+    Parameters
+    ----------
+    range_E : list of float, optional
+        Energy range [E_min, E_max] in keV (default: [0.5, 2.0]).
+    n_E : int, optional
+        Number of energy bins (default: 10).
+    T : float, optional
+        Temperature in keV (default: 1).
+    z : float, optional
+        Redshift (default: 0.).
+    abund : float, optional
+        Abundance of elements in Z_solar (default: 0.3).
+    idx_start_abund : int, optional
+        Index to start setting abundance values (default: 1).
+    elements : list of int or None, optional
+        List of atomic numbers for elements (default: None, i.e., [1, 2]).
+    rmf : str or None, optional
+        Response matrix file (default: None).
+    arf : str or None, optional
+        Ancillary response file (default: None).
+    eebrems : bool, optional
+        Include electron-electron bremsstrahlung (default: False).
+    verbose : int, optional
+        Verbosity level (default: 0).
+    plots : bool, optional
+        Generate plots (default: False).
+
+    Returns
+    -------
+    float
+        Computed flux in ph cm^3 s^-1 if no rmf and arf are provided, else in ph cm^5 s^-1
+    """
     ebins_in, ebins_out, ebins_in_m, ebins_out_m, rmfmatrix, arf, abres, elements = \
                                 prepare_session_rmf_arf_elts(range_E, n_E, rmf, arf, elements, verbose=verbose)
     
@@ -56,12 +90,35 @@ def compute_flux(range_E=[0.5, 2.0], n_E=10,
         axs[1].legend()
         axs[0].set_xlim([range_E[0], range_E[1]])
         axs[1].set_xlabel('keV')
-        axs[0].set_ylabel('ph cm^3 s^-1')
-        axs[1].set_ylabel('ph cm^5 s^-1')
+        axs[0].set_ylabel(r'$ph\ cm^{5}\ s^{-1}\ bin^{-1}$')
+        axs[1].set_ylabel(r'$ph\ cm^{5}\ s^{-1}\ bin^{-1}$')
     return res
     
     
 def prepare_session_rmf_arf_elts(range_E, n_E, rmf, arf, elements, verbose=0):
+    """
+    Prepare the session for response matrix, ancillary response, and elements.
+
+    Parameters
+    ----------
+    range_E : list of float
+        Energy range [E_min, E_max] in keV.
+    n_E : int
+        Number of energy bins.
+    rmf : str
+        Path to the response matrix file.
+    arf : str
+        Path to the ancillary response file.
+    elements : list of int or None
+        List of atomic numbers for elements.
+    verbose : int, optional
+        Verbosity level (default: 0).
+
+    Returns
+    -------
+    tuple
+        Tuple containing (ebins_in, ebins_out, ebins_in_m, ebins_out_m, rmfmatrix, arf, abres, elements).
+    """
     # ebins in and out are because of the rmf. ebins in must be larger as some photons outside 
     # the ebins_out may be falsely detected inside ebins_out... we have to take account of them.
     # boundaries
@@ -101,27 +158,45 @@ def make_fluxtable(outfile=None,
              verbose=0,
              plots=False):
     """
-    Generate tabulated xray flux data.
+    Generate tabulated x-ray flux data.
 
-    Parameters:
-    - outfile (str): Output file path.
-    - range_E (list): Energy range.
-    - n_E (int): Number of energy bins.
-    - range_T (list): Temperature range.
-    - n_T (int): Number of temperature bins.
-    - range_z (list): Redshift range.
-    - n_z (int): Number of redshift bins.
-    - abund (float): Abundance value.
-    - idx_start_abund (int): Index to start setting abundance.
-    - elements (list): List of elements.
-    - rmf (str): RMF file path.
-    - arf (str): ARF file path.
-    - eebrems (bool): Include electron-electron bremsstrahlung.
-    - verbose (int): Verbosity level.
-    - plots (bool): Generate plots.
+    Parameters
+    ----------
+    outfile : str or None, optional
+        Output file path.
+    range_E : list of float, optional
+        Energy range [E_min, E_max] in keV (default: [0.5, 2.0]).
+    n_E : int, optional
+        Number of energy bins (default: 10).
+    range_T : list of float, optional
+        Temperature range [T_min, T_max] in keV (default: [0.05, 20]).
+    n_T : int, optional
+        Number of temperature bins (default: 10).
+    range_z : list of float, optional
+        Redshift range [z_min, z_max] (default: [0., 3.0]).
+    n_z : int, optional
+        Number of redshift bins (default: 10).
+    abund : float, optional
+        Abundance value (default: 0.3).
+    idx_start_abund : int, optional
+        Index to start setting abundance (default: 1). Means that the first element concerned by the abundance has Z_i = 1 + idx_start_abund
+    elements : list of int or None, optional
+        List of atomic numbers for elements (default: None).
+    rmf : str or None, optional
+        RMF file path (default: None).
+    arf : str or None, optional
+        ARF file path (default: None).
+    eebrems : bool, optional
+        Include electron-electron bremsstrahlung (default: False).
+    verbose : int, optional
+        Verbosity level (default: 0).
+    plots : bool, optional
+        Generate plots (default: False).
 
-    Returns:
-    - tuple: Result, redshift bins, temperature bins, elements, abundance results.
+    Returns
+    -------
+    tuple
+        Tuple containing (Result, redshift bins, temperature bins, elements, abundance results).
     """
     # redshift and Temperature
     zbins = np.linspace(range_z[0],range_z[1],n_z)
@@ -196,7 +271,21 @@ def make_fluxtable(outfile=None,
 
 def get_response_ebins(rmfdat):
     """
+    Get the response energy bins from the given RMF data.
+    
     mainly copied/adapted from https://github.com/AtomDB/pyatomdb/blob/c90494674dd01f3be204200238dac3fab1bd0af6/pyatomdb/pyatomdb/spectrum.py
+
+    Parameters
+    ----------
+    rmfdat : astropy.io.fits.HDUList
+        The RMF data.
+
+    Returns
+    -------
+    specbins_in : numpy.ndarray
+        Energy bins for the input spectrum.
+    specbins_out : numpy.ndarray
+        Energy bins for the output spectrum.
     """
     matrixname='MATRIX'
     specbins_in = rmfdat[matrixname].data['ENERG_LO']
@@ -208,12 +297,27 @@ def get_response_ebins(rmfdat):
 def load_rmf_arf(rmf, arf,
                  specbins_in, specbins_out):
     """
-    mainly copied/adapted from https://github.com/AtomDB/pyatomdb/blob/c90494674dd01f3be204200238dac3fab1bd0af6/pyatomdb/pyatomdb/spectrum.py
-    
-    returns an rmf matrix and a arf array. The loaded rmf is adjusted and interpolated from (specbins, ebins_out), 
-    given by the rmf original file, to (specbins_in, specbins_out) asked by the code.
-    Same for arf, interpolated into specbins_out.
-    This clips energies wide outside the interesting range
+    Load the RMF (Response Matrix File) and ARF (Ancillary Response File),
+    adjust and interpolate the RMF matrix, and interpolate the ARF array
+    according to the specified input and output energy bins. Mainly copied/adapted from https://github.com/AtomDB/pyatomdb/blob/c90494674dd01f3be204200238dac3fab1bd0af6/pyatomdb/pyatomdb/spectrum.py
+
+    Parameters
+    ----------
+    rmf : str
+        File path to the RMF file.
+    arf : str
+        File path to the ARF file.
+    specbins_in : numpy.ndarray
+        Energy bins for the input spectrum.
+    specbins_out : numpy.ndarray
+        Energy bins for the output spectrum.
+
+    Returns
+    -------
+    rmf_interpolated : numpy.ndarray
+        Interpolated RMF matrix for the specified energy bins.
+    arf_interpolated : numpy.ndarray
+        Interpolated ARF array for the specified output energy bins.
     """
     rmf= F.open(rmf)
     arfdat = F.open(arf)
@@ -266,4 +370,5 @@ def load_rmf_arf(rmf, arf,
     return rmf_interpolated, arf_interpolated
 
 def mid_vals(arr):
+    """Calculate the mid-values of an array."""
     return (arr[1:]+arr[:-1])/2.0
